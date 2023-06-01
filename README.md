@@ -60,7 +60,7 @@ The `POST /submitPrompt` has three possible responses:
 * `500`: This status code indicates that an error occurred on the server while processing the request or with Pinecone or OpenAI. In this case, the error message will be included in the response body.
 
 ## Design Diagram
-![GPTMail Design Diagram](design-diagram.png "GPTMail Design Diagram")
+![GPTMail Design Diagram](design_diagram.png "GPTMail Design Diagram")
 
 ### Client Design
 The client is built using React and TypeScript with the `mui` package used for styled components. It is a form with a message input box and a Send button. The Send button is disabled if the message input box is empty or if the message input box is empty after trimming the input. The `ChatInterface` component also shows the chatbot's responses. A `Message` interfact with the following fields is used to represent a message: `text` and `isUser`. The `text` field is the text of the message, while the `isUser` field is a boolean indicating whether the message was sent by the user or the chatbot.
