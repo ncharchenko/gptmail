@@ -69,7 +69,7 @@ function ChatInterface() {
                         onChange={(event) => setUserInput(event.target.value)}
                         placeholder="Type your message here..."
                     />
-                    <Button type="submit" variant="contained" sx={{ ml: 1 }}>
+                    <Button type="submit" variant="contained" disabled={!userInput.trim()} sx={{ ml: 1 }}>
                         Send
                     </Button>
                 </Box>
