@@ -1,6 +1,6 @@
 // ChatInterface.test.tsx
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { act, render, screen, fireEvent, waitFor } from '@testing-library/react';
 import axios from 'axios';
 import ChatInterface from './ChatInterface';
 
@@ -27,27 +27,41 @@ describe('ChatInterface component', () => {
     expect(screen.getByText('Hello')).toBeInTheDocument();
   });
 
-    // test axios post request and response
+  // test axios post request and response
   test('sends prompt and receives response', async () => {
     // mock axios post request and response
     (axios.post as jest.Mock).mockResolvedValueOnce({
-      data: { text: 'Hi there' },
+      data: 'Hi there',
     });
+  
+    
+    render(<ChatInterface />);
+    const input = screen.getByPlaceholderText('Type your message here...');
+    const button = screen.getByText('Send');
+    await act(async () => {  
+      fireEvent.change(input, { target: { value: 'Hello' } });
+      fireEvent.click(button);
+    });
+  
+    // Make sure the message sent by the user is displayed
+    await waitFor(() => screen.getByText('Hello'));
+  
+    // Wait for axios to resolve and the component to re-render with the new message
+    await act(async () => {
+      await waitFor(() => screen.findByText(/Hi there/));
+    });
+  
+    expect(screen.getByText('Hi there')).not.toHaveClass('hovered'); // response message should not have hovered class
+  });
 
+
+  test('disables the Send button when there is no user input', () => {
     render(<ChatInterface />);
     const input = screen.getByPlaceholderText('Type your message here...');
     const button = screen.getByText('Send');
     
-    fireEvent.change(input, { target: { value: 'Hello' } });
-    fireEvent.click(button);
-
-    // Make sure the message sent by the user is displayed
-    await waitFor(() => screen.getByText('Hello'));
-    
-    // Wait for axios to resolve and the component to re-render with the new message
-    await waitFor(() => screen.findByText(/Hi there/));
-    
-    expect(screen.getByText('Hello')).toBeInTheDocument();
+    expect(input).toHaveValue('');
+    expect(button).toBeDisabled();
   });
 
 });

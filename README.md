@@ -1,46 +1,80 @@
-# Getting Started with Create React App
+# GPTMail
+GPTMail is a prototype application that allows users to upload email data in PDF or JSON format to a Pinecone vector store index and use it as a knowledge base when querying ChatGPT 3.5 about their email data.
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+## Problem Statement
+The crux of the problem posed is the challenge of providing a ChatGPT-like large language model (LLM) with a custom knowledge base. In our case, this custom knowledge base will be a user's email inbox. As a proof of concept, this email inbox has been implemented through PDF files in the `server/emails` directory.
 
-## Available Scripts
+## Getting Started
+To get started with GPTMail, you will need to set up the following environment variables in a file named config.env in the `server` directory:
 
-In the project directory, you can run:
+```
+OPENAI_API_KEY="your_openai_api_key"
+PINECONE_ENVIRONMENT="your_pinecone_environment"
+PINECONE_API_KEY="your_pinecone_api_key"
+PINECONE_INDEX="your_pinecone_index"
+```
 
-### `npm start`
+Furthermore, you will need to install the dependencies for the client and server. To do so, run the following commands:
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+```
+npm install
+cd server
+npm install
+```
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+Add emails you want to add to your Pinecone index, which is the chatbot's knowledge base, to the `server/emails` directory. These emails should be in PDF format. You can also add emails in JSON format to the `server/emails` directory. Note that any encoded strings will have to be decoded. 
 
-### `npm test`
+Finally, you can run the client with the following command in the root directory:
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+```
+npm start
+```
 
-### `npm run build`
+To run the server, `cd` into the `server` directory in a separate shell and run the following command:
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+```
+npm start
+```
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+## API Routes
+**POST /submitPrompt**
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+This route allows users to submit a prompt to the GPT-3 API.
 
-### `npm run eject`
+**Request Body**
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+The request body should be a JSON object with the following fields:
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+prompt: The prompt to submit to the GPT-3.5 model.
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
+**Response**
 
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
+The `POST /submitPrompt` has three possible responses:
 
-## Learn More
+* `200`: This status code indicates a successful call to the OpenAI ChatGPT API and that a response was received. The response data will contain the text result based on the given prompt.
 
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
+* `400`: This status code indicates that the prompt was not provided. This happens usually in the case of user error or an error with the prompt not being received by the server. This is an extra safeguard on top of the input on the client side being disabled if trimming the input results in an empty string.
 
-To learn React, check out the [React documentation](https://reactjs.org/).
+* `500`: This status code indicates that an error occurred on the server while processing the request or with Pinecone or OpenAI. In this case, the error message will be included in the response body.
+
+## Design Diagram
+![GPTMail Design Diagram](design-diagram.png "GPTMail Design Diagram")
+
+### Client Design
+The client is built using React and TypeScript with the `mui` package used for styled components. It is a form with a message input box and a Send button. The Send button is disabled if the message input box is empty or if the message input box is empty after trimming the input. The `ChatInterface` component also shows the chatbot's responses. A `Message` interfact with the following fields is used to represent a message: `text` and `isUser`. The `text` field is the text of the message, while the `isUser` field is a boolean indicating whether the message was sent by the user or the chatbot.
+
+### Server Design
+The server is built using Node.js and Express. It provides a single route, `submitPrompt`, that accepts POST requests with a prompt in the request body. The server then sends the prompt to the OpenAI ChatGPT 3.5 model and returns the response to the client.
+
+The server uses the `langchain` and `pinecone-client` npm packages to interact with the OpenAI and Pinecone APIs, respectively. The `langchain` package is used to send prompts to the ChatGPT 3.5 model, while the `pinecone-client` package is used to index and query email data in Pinecone using OpenAI's embeddings, creating a vector index with 1536 dimensions using cosine similarity.
+
+## [Demo](https://www.youtube.com/watch?v=JV7teiAoDyM)
+
+## Beyond GPTMail.init()
+Some potential next steps for this application include, but are not limited to:
+
+1. **Email API integration.** The extra tech debt and work involved with integrating email APIs such as Gmail and Outlook were ruled to be beyond the scope of this initial prototype. This included things like decoding base64 strings which are returned from the Gmail API instead of the raw text in the email body. Furthermore, getting messages from the Gmail API in a high volume can lead to possible rate limitations. This is because the API requires one `GET` request to get a list of message and thread ids. One then must iterate through these ids and send separate `GET` requests for each singular message.
+
+2. **Chat history.** This would be incorporated through a No-SQL database such as MongoDB given these chats will undertake more write operations than read operations. The `Message` interface also allows for a simple document structure. These can then be loaded into the `ChatInterface` component. An additional collection can be created to store the `memory` object connected to the chat history. This way, the chat model will be able to remember the context of the conversation.
+
+3. **Chrome extension.** This could be an elegant way to extend GPTMail's usability. Currently, it requires a separate page to be loaded in order to use the application. A Chrome extension would allow users to use GPTMail alongside their existing web email client without having to click away from their email inbox.
