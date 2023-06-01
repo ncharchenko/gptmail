@@ -36,6 +36,8 @@ To run the server, `cd` into the `server` directory in a separate shell and run 
 npm start
 ```
 
+Navigate to `http://localhost:3000` to access the client and interact with the application.
+
 ## API Routes
 **POST /submitPrompt**
 
